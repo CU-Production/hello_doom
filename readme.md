@@ -11,7 +11,7 @@ There is also an [ImDrawList API Demo](https://github.com/CU-Production/hello_do
 
 # Reference
 
-https://github.com/ocornut/imgui/blob/master/docs/FAQ.md#q-how-can-i-display-custom-shapes-using-low-level-imdrawlist-api
-https://github.com/ocornut/imgui/issues/3606
-https://github.com/Daivuk/PureDOOM
-https://github.com/floooh/sokol
+- https://github.com/ocornut/imgui/blob/master/docs/FAQ.md#q-how-can-i-display-custom-shapes-using-low-level-imdrawlist-api
+- https://github.com/ocornut/imgui/issues/3606
+- https://github.com/Daivuk/PureDOOM
+- https://github.com/floooh/sokol
