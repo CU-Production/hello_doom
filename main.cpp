@@ -30,63 +30,13 @@ constexpr uint32_t SCREEN_WIDTH = 800;
 constexpr uint32_t SCREEN_HEIGHT = 600;
 
 sg_pass_action pass_action = {0};
-sg_buffer vbuf = {0};
-sg_buffer ibuf = {0};
-sg_pipeline pip = {0};
-sg_bindings binding = {0};
+sg_image doom_img = {0};
 
 void init() {
     sg_desc desc = {0};
     desc.context = sapp_sgcontext();
     desc.logger.func = slog_func;
     sg_setup(&desc);
-
-    const float vertices[] = {
-            // positions     uv
-            -1.0, -1.0, 0.0, 0.0, 1.0,
-            1.0,  -1.0, 0.0, 1.0, 1.0,
-            1.0,  1.0,  0.0, 1.0, 0.0,
-            -1.0, 1.0,  0.0, 0.0, 0.0,
-    };
-    sg_buffer_desc vb_desc = {0};
-    vb_desc.data = SG_RANGE(vertices);
-    vbuf = sg_make_buffer(&vb_desc);
-
-    const int indices[] = { 0, 1, 2, 0, 2, 3, };
-    sg_buffer_desc ib_desc = {};
-    ib_desc.type = SG_BUFFERTYPE_INDEXBUFFER;
-    ib_desc.data = SG_RANGE(indices);
-    ibuf = sg_make_buffer(&ib_desc);
-
-    sg_shader_desc shd_desc = {0};
-    shd_desc.attrs[0].name = "position";
-    shd_desc.attrs[1].name = "texcoord0";
-    shd_desc.vs.source = R"(
-#version 330
-layout(location=0) in vec3 position;
-layout(location=1) in vec2 texcoord0;
-out vec4 color;
-out vec2 uv;
-void main() {
-  gl_Position = vec4(position, 1.0f);
-  uv = texcoord0;
-  color = vec4(uv, 0.0f, 1.0f);
-}
-)";
-    shd_desc.fs.images[0].name = "tex";
-    shd_desc.fs.images[0].image_type = SG_IMAGETYPE_2D;
-    shd_desc.fs.images[0].sampler_type = SG_SAMPLERTYPE_FLOAT;
-    shd_desc.fs.source = R"(
-#version 330
-uniform sampler2D tex;
-in vec4 color;
-in vec2 uv;
-out vec4 frag_color;
-void main() {
-  frag_color = texture(tex, uv);
-  //frag_color = pow(frag_color, vec4(1.0f/2.2f));
-}
-)";
 
     sg_image_desc img_desc = {0};
     img_desc.width  = DOOM_WIDTH;
@@ -95,18 +45,7 @@ void main() {
     img_desc.pixel_format = SG_PIXELFORMAT_RGBA8;
     img_desc.usage = SG_USAGE_STREAM;
 
-    sg_shader shd = sg_make_shader(&shd_desc);
-
-    sg_pipeline_desc pip_desc = {0};
-    pip_desc.shader = shd;
-    pip_desc.layout.attrs[0].format = SG_VERTEXFORMAT_FLOAT3;
-    pip_desc.layout.attrs[1].format = SG_VERTEXFORMAT_FLOAT2;
-    pip_desc.index_type = SG_INDEXTYPE_UINT32;
-    pip = sg_make_pipeline(&pip_desc);
-
-    binding.vertex_buffers[0] = vbuf;
-    binding.index_buffer = ibuf;
-    binding.fs_images[0] = sg_make_image(&img_desc);
+    doom_img = sg_make_image(&img_desc);
 
     pass_action.colors[0] = (sg_color_attachment_action){ .action=SG_ACTION_CLEAR, .value={0.5f, 0.0f, 0.0f, 1.0f} };
 
@@ -137,7 +76,7 @@ void frame() {
 
     sg_image_data image_data = {0};
     image_data.subimage[0][0] = (sg_range){ .ptr=frame_buffer, .size=(DOOM_WIDTH * DOOM_HEIGHT * 4 * sizeof(uint8_t)) };
-    sg_update_image(binding.fs_images[0], &image_data);
+    sg_update_image(doom_img, &image_data);
 
     const int width = sapp_width();
     const int height = sapp_height();
@@ -146,28 +85,15 @@ void frame() {
     // imgui
     {
         ImGuiIO& io = ImGui::GetIO();
-        ImGui::ShowDemoWindow();
-
-        // if (ImGui::Begin("My shapes")) {
-        //     ImDrawList* draw_list = ImGui::GetWindowDrawList();
-        //     ImVec2 p = ImGui::GetCursorScreenPos();
-        //     draw_list->AddCircleFilled(ImVec2(p.x + 50, p.y + 50), 30.0f, IM_COL32(255, 0, 0, 255));
-        //     draw_list->AddLine(ImVec2(p.x, p.y), ImVec2(p.x + 100.0f, p.y + 100.0f), IM_COL32(255, 255, 0, 255), 3.0f);
-        //     ImGui::Dummy(ImVec2(100, 100));
-        //     ImGui::End();
-        // }
 
         if (ImGui::Begin("FX")) {
             ImGui::Text("DOOM");
-            ImGui::Image((ImTextureID)(uintptr_t)binding.fs_images[0].id, {DOOM_WIDTH, DOOM_HEIGHT});
+            ImGui::Image((ImTextureID)(uintptr_t)doom_img.id, {DOOM_WIDTH, DOOM_HEIGHT});
             ImGui::End();
         }
     }
 
     sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
-    sg_apply_pipeline(pip);
-    sg_apply_bindings(&binding);
-    sg_draw(0, 6, 1);
     simgui_render();
     sg_end_pass();
     sg_commit();
@@ -179,7 +105,7 @@ void cleanup() {
 }
 
 void input(const sapp_event* event) {
-    if (simgui_handle_event(event)) return;
+
 
     switch (event->type) {
         case SAPP_EVENTTYPE_KEY_DOWN: {
@@ -206,6 +132,8 @@ void input(const sapp_event* event) {
         }
         default: break;
     }
+
+    simgui_handle_event(event);
 }
 
 int main(int argc, char** args) {
