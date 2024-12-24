@@ -3,7 +3,7 @@ project(hello_doom)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(hello_doom main.c)
+add_executable(hello_doom main.cpp libs.c)
 #target_compile_options(hello_doom PRIVATE -Wall -Werror -Wextra)
 target_link_libraries(hello_doom PRIVATE kernel32 user32 shell32 gdi32)
 add_custom_command(
