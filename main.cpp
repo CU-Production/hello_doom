@@ -5,6 +5,10 @@
 #include "sokol_glue.h"
 #include "sokol_log.h"
 
+#include "imgui.h"
+#define SOKOL_IMGUI_IMPL
+#include "sokol_imgui.h"
+
 #define DOOM_IMPLEMENT_PRINT
 #define DOOM_IMPLEMENT_FILE_IO
 #define DOOM_IMPLEMENT_MALLOC
@@ -18,9 +22,12 @@
 doom_key_t sokol_keycode_to_doom_key(sapp_keycode keycode);
 doom_button_t sokol_mousebutton_to_doom_button(sapp_mousebutton sokol_button);
 
-#define DOOM_WIDTH  320
-#define DOOM_HEIGHT 200
+constexpr uint32_t DOOM_WIDTH = 320;
+constexpr uint32_t DOOM_HEIGHT = 200;
 uint8_t frame_buffer[DOOM_WIDTH*DOOM_HEIGHT*4];
+
+constexpr uint32_t SCREEN_WIDTH = 800;
+constexpr uint32_t SCREEN_HEIGHT = 600;
 
 sg_pass_action pass_action = {0};
 sg_buffer vbuf = {0};
@@ -82,7 +89,7 @@ void main() {
 )";
 
     sg_image_desc img_desc = {0};
-    img_desc.width = DOOM_WIDTH;
+    img_desc.width  = DOOM_WIDTH;
     img_desc.height = DOOM_HEIGHT;
     img_desc.label = "doom-frame-texture";
     img_desc.pixel_format = SG_PIXELFORMAT_RGBA8;
@@ -102,6 +109,9 @@ void main() {
     binding.fs_images[0] = sg_make_image(&img_desc);
 
     pass_action.colors[0] = (sg_color_attachment_action){ .action=SG_ACTION_CLEAR, .value={0.5f, 0.0f, 0.0f, 1.0f} };
+
+    simgui_desc_t simgui_desc = {0};
+    simgui_setup(&simgui_desc);
 }
 
 void frame() {
@@ -129,19 +139,48 @@ void frame() {
     image_data.subimage[0][0] = (sg_range){ .ptr=frame_buffer, .size=(DOOM_WIDTH * DOOM_HEIGHT * 4 * sizeof(uint8_t)) };
     sg_update_image(binding.fs_images[0], &image_data);
 
+    const int width = sapp_width();
+    const int height = sapp_height();
+    simgui_new_frame({ width, height, sapp_frame_duration(), sapp_dpi_scale() });
+
+    // imgui
+    {
+        ImGuiIO& io = ImGui::GetIO();
+        ImGui::ShowDemoWindow();
+
+        // if (ImGui::Begin("My shapes")) {
+        //     ImDrawList* draw_list = ImGui::GetWindowDrawList();
+        //     ImVec2 p = ImGui::GetCursorScreenPos();
+        //     draw_list->AddCircleFilled(ImVec2(p.x + 50, p.y + 50), 30.0f, IM_COL32(255, 0, 0, 255));
+        //     draw_list->AddLine(ImVec2(p.x, p.y), ImVec2(p.x + 100.0f, p.y + 100.0f), IM_COL32(255, 255, 0, 255), 3.0f);
+        //     ImGui::Dummy(ImVec2(100, 100));
+        //     ImGui::End();
+        // }
+
+        if (ImGui::Begin("FX")) {
+            ImGui::Text("DOOM");
+            ImGui::Image((ImTextureID)(uintptr_t)binding.fs_images[0].id, {DOOM_WIDTH, DOOM_HEIGHT});
+            ImGui::End();
+        }
+    }
+
     sg_begin_default_pass(&pass_action, sapp_width(), sapp_height());
     sg_apply_pipeline(pip);
     sg_apply_bindings(&binding);
     sg_draw(0, 6, 1);
+    simgui_render();
     sg_end_pass();
     sg_commit();
 }
 
 void cleanup() {
+    simgui_shutdown();
     sg_shutdown();
 }
 
 void input(const sapp_event* event) {
+    if (simgui_handle_event(event)) return;
+
     switch (event->type) {
         case SAPP_EVENTTYPE_KEY_DOWN: {
             doom_key_down(sokol_keycode_to_doom_key(event->key_code));
@@ -195,8 +234,8 @@ int main(int argc, char** args) {
     desc.frame_cb = frame;
     desc.cleanup_cb = cleanup,
     desc.event_cb = input,
-    desc.width  = DOOM_WIDTH,
-    desc.height = DOOM_HEIGHT,
+    desc.width  = SCREEN_WIDTH,
+    desc.height = SCREEN_HEIGHT,
     desc.window_title = "sokol + puredoom",
     desc.icon.sokol_default = true,
     desc.logger.func = slog_func;
