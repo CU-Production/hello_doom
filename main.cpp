@@ -5,6 +5,7 @@
 #include "sokol_glue.h"
 #include "sokol_log.h"
 
+#define IMGUI_DEFINE_MATH_OPERATORS
 #include "imgui.h"
 #define SOKOL_IMGUI_IMPL
 #include "sokol_imgui.h"
@@ -90,7 +91,7 @@ void frame() {
             ImGui::Text("DOOM");
             ImDrawList* draw_list = ImGui::GetWindowDrawList();
             ImVec2 p = ImGui::GetCursorScreenPos();
-            draw_list->AddImage((ImTextureID)(uintptr_t)doom_img.id, p, ImVec2(DOOM_WIDTH + p.x, DOOM_HEIGHT + p.y));
+            draw_list->AddImage((ImTextureID)(uintptr_t)doom_img.id, p, ImVec2(DOOM_WIDTH, DOOM_HEIGHT) + p);
             ImGui::Dummy(ImVec2(DOOM_WIDTH, DOOM_HEIGHT));
             ImGui::End();
         }
