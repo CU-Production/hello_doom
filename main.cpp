@@ -47,7 +47,7 @@ void init() {
 
     doom_img = sg_make_image(&img_desc);
 
-    pass_action.colors[0] = (sg_color_attachment_action){ .action=SG_ACTION_CLEAR, .value={0.5f, 0.0f, 0.0f, 1.0f} };
+    pass_action.colors[0] = (sg_color_attachment_action){ .action=SG_ACTION_CLEAR, .value={0.2f, 0.1f, 0.3f, 1.0f} };
 
     simgui_desc_t simgui_desc = {0};
     simgui_setup(&simgui_desc);
@@ -88,7 +88,10 @@ void frame() {
 
         if (ImGui::Begin("FX")) {
             ImGui::Text("DOOM");
-            ImGui::Image((ImTextureID)(uintptr_t)doom_img.id, {DOOM_WIDTH, DOOM_HEIGHT});
+            ImDrawList* draw_list = ImGui::GetWindowDrawList();
+            ImVec2 p = ImGui::GetCursorScreenPos();
+            draw_list->AddImage((ImTextureID)(uintptr_t)doom_img.id, p, ImVec2(DOOM_WIDTH + p.x, DOOM_HEIGHT + p.y));
+            ImGui::Dummy(ImVec2(DOOM_WIDTH, DOOM_HEIGHT));
             ImGui::End();
         }
     }
