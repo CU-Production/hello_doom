@@ -89,20 +89,10 @@ void frame() {
 
         if (ImGui::Begin("FX")) {
             ImGui::Text("DOOM");
+            // ImGui::Image((ImTextureID)(uintptr_t)doom_img.id, ImVec2(DOOM_WIDTH, DOOM_HEIGHT));
             ImDrawList* draw_list = ImGui::GetWindowDrawList();
             ImVec2 p = ImGui::GetCursorScreenPos();
-#define px(pos, color) draw_list->AddRectFilled(p + pos, ImVec2(2, 2) + p + pos, color)
-            // draw_list->AddImage((ImTextureID)(uintptr_t)doom_img.id, p, ImVec2(DOOM_WIDTH, DOOM_HEIGHT) + p);
-            // draw_list->AddRectFilled(p, p + ImVec2(DOOM_WIDTH, DOOM_HEIGHT), ImColor(128, 0, 0, 255));
-            for (int x = 0; x < DOOM_WIDTH; x++) {
-                for (int y = 0; y < DOOM_HEIGHT; y++) {
-                    uint8_t r = frame_buffer[(x * DOOM_WIDTH + y) * 4 + 0];
-                    uint8_t g = frame_buffer[(x * DOOM_WIDTH + y) * 4 + 1];
-                    uint8_t b = frame_buffer[(x * DOOM_WIDTH + y) * 4 + 2];
-                    uint8_t a = frame_buffer[(x * DOOM_WIDTH + y) * 4 + 3];
-                    px(ImVec2(x, y), ImColor(r, g, b, a));
-                }
-            }
+            draw_list->AddImage((ImTextureID)(uintptr_t)doom_img.id, p, ImVec2(DOOM_WIDTH, DOOM_HEIGHT) + p);
             ImGui::Dummy(ImVec2(DOOM_WIDTH, DOOM_HEIGHT));
             ImGui::End();
         }
